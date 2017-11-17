@@ -14,11 +14,17 @@ data class Comment(
         val id: String,
         val replyToId: String?,
         val user: String,
+        val time: String,
         val content: Element,
         val fa: FA) {
 
     override fun toString() =
-            "(Comment ${id}: by $user)"
+            "(Comment $id by $user : ${content.text()} (at $date))"
+
+    /**
+     * The post time of the comment.
+     */
+    val date get() = FA.parseTime(time)
 
     /**
      * The text of the comment.

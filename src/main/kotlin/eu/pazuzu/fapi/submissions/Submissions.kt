@@ -70,11 +70,13 @@ data class Submission(
                     .attr("href")
                     .substringAfter("/user/")
                     .substringBefore("/")
+            val time = c.selectFirst("span.popup_date").attr("title")
+
             // Content is present in a specific div
             val content = c.selectFirst("div.message-text")
 
             // Add result to list
-            result += Comment(id, replyToId, user, content, fa)
+            result += Comment(id, replyToId, user, time, content, fa)
         }
 
         // Make list of mutable list
@@ -171,3 +173,64 @@ fun submissionPages(user: String, fa: FA) =
  */
 fun submissions(user: String, fa: FA) =
         submissionPages(user, fa).flatMap { (_, j) -> j.submissions.asSequence() }
+
+
+/**
+ * Gets a specific faves page.
+ * @param user The user to retrieve the page for.
+ * @param page The page number to retrieve, starting at 1.
+ * @param fa The basic configuration for URLs, methods and constants and units.
+ */
+fun favesPage(user: String, page: Int, fa: FA): SubmissionPage {
+    // Get the URLS
+    val pageSuffix = if (page == 1) "" else "/$page"
+    val url = "${fa.url}/favorites/$user$pageSuffix"
+
+    // Get the document
+    val doc = Jsoup.connect(url).get()
+
+    // Find all tables that have submission IDs
+    val submissions = doc
+            .select("figure[id^=sid]")
+            .map {
+                val id = it.id()
+                        .substringAfter("sid-")
+                val entries = it.select("a").subList(0, 2)
+                val thumbnailImage = entries[0].selectFirst("img")
+                val thumbnail = thumbnailImage.attr("src")
+                val width = thumbnailImage.attr("data-width").toDouble()
+                val height = thumbnailImage.attr("data-height").toDouble()
+                val title = entries[1].text()
+
+                Submission(user, page, id, title, thumbnail, width, height, fa)
+            }
+
+    // There is a next page if there is a button pointing to a next page
+    val more = doc.select("div.fancy-pagination > a.right").any()
+
+    // Return results
+    return SubmissionPage(user, page, submissions, more, fa)
+}
+
+/**
+ * Gets all faves pages until there are no more left.
+ * @param user The user to find the pages for.
+ * @param fa The basic configuration for URLs, methods and constants and units.
+ * @return Returns the page number associated to the faves page.
+ */
+fun favesPages(user: String, fa: FA) =
+        generateSequence(1 to favesPage(user, 1, fa)) { (p, j) ->
+            if (j.more)
+                (p + 1) to favesPage(user, p + 1, fa)
+            else
+                null
+        }
+
+/**
+ * Gets all faves for the user.
+ * @param user The user to get the submissions for.
+ * @param fa The basic configuration for URLs, methods and constants and units.
+ * @return Returns all faves.
+ */
+fun faves(user: String, fa: FA) =
+        favesPages(user, fa).flatMap { (_, j) -> j.submissions.asSequence() }

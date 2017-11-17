@@ -82,11 +82,14 @@ data class Journal(
                     .attr("href")
                     .substringAfter("/user/")
                     .substringBefore("/")
+
+            val time = c.selectFirst("span.popup_date").attr("title")
+
             // Content is present in a specific div
             val content = c.selectFirst("div.message-text")
 
             // Add result to list
-            result += Comment(id, replyToId, user, content, fa)
+            result += Comment(id, replyToId, user, time, content, fa)
         }
 
         // Make list of mutable list

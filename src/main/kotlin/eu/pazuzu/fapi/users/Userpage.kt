@@ -1,8 +1,11 @@
 package eu.pazuzu.fapi.users
 
 import eu.pazuzu.fapi.FA
+import eu.pazuzu.fapi.comments.Comment
 import eu.pazuzu.fapi.util.parent
 import eu.pazuzu.fapi.util.textAfter
+import eu.pazuzu.fapi.watchlists.Direction
+import eu.pazuzu.fapi.watchlists.watchlists
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import java.util.*
@@ -32,6 +35,7 @@ data class Userpage(
         val registeredTime: String,
         val mood: String,
         val content: Element,
+        val shouts: List<Comment>,
         val numPageVisits: Int,
         val numSubmissions: Int,
         val numCommentsReceived: Int,
@@ -56,9 +60,26 @@ data class Userpage(
     val submissions get() = eu.pazuzu.fapi.submissions.submissions(user, fa)
 
     /**
+     * Gets the faves of the user.
+     */
+    val faves get() = eu.pazuzu.fapi.submissions.faves(user, fa)
+
+    /**
      * Gets the journals posted by the user.
      */
     val journals get() = eu.pazuzu.fapi.journals.journals(user, fa)
+
+    /**
+     * Gets all users the user is watching.
+     */
+    val watches get() = watchlists(user, Direction.Out, fa)
+
+    /**
+     * Gets all users watching the user.
+     */
+    val watchedBy get() = watchlists(user, Direction.In, fa)
+
+    val mutuals get() = watches.toSortedSet() intersect watchedBy.toSortedSet()
 }
 
 /**
@@ -91,11 +112,30 @@ fun userpage(user: String, fa: FA): Userpage {
 
     val pageVisits = statsEntries[0].textAfter()?.trim()?.toInt() ?: 0
     val submissions = statsEntries[1].textAfter()?.trim()?.toInt() ?: 0
-    val commentsRecieved = statsEntries[2].textAfter()?.trim()?.toInt() ?: 0
+    val commentsReceived = statsEntries[2].textAfter()?.trim()?.toInt() ?: 0
     val commentsGiven = statsEntries[3].textAfter()?.trim()?.toInt() ?: 0
     val journals = statsEntries[4].textAfter()?.trim()?.toInt() ?: 0
     val favorites = statsEntries[5].textAfter()?.trim()?.toInt() ?: 0
 
-    return Userpage(user, avatar, fullName, artistType, registeredTime, mood, content, pageVisits,
-            submissions, commentsRecieved, commentsGiven, journals, favorites, fa)
+    val shouts = page.select("table[id^=shout-]")
+            .map {
+                val id = it.id().substringAfter("shout-")
+                val shoutUser = it.selectFirst("a[href^=/user/]").attr("href")
+                        .substringAfter("/user/")
+                        .substringBefore("/")
+                val time = it.selectFirst("span.popup_date").attr("title")
+                val shoutContent = it.selectFirst("div")
+                Comment(id, null, shoutUser, time, shoutContent, fa)
+            }
+
+    return Userpage(user, avatar, fullName, artistType, registeredTime, mood, content, shouts, pageVisits,
+            submissions, commentsReceived, commentsGiven, journals, favorites, fa)
+}
+
+fun main(args: Array<String>) {
+    val u = userpage("pazuzu", FA.default)
+
+
+    for (s in u.shouts)
+        println(s)
 }
