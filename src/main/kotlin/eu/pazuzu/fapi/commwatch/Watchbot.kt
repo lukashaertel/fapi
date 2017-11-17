@@ -80,7 +80,6 @@ fun main(args: Array<String>) {
                     var last: Boolean? = null
                     journalsDaemon(a, FA.default).consumeEach {
                         val open = it
-                                .filter { "comm" in it.title.toLowerCase() }
                                 .lastOrNull { "open" in it.title.toLowerCase() || "closed" in it.title.toLowerCase() }
                                 ?.title?.contains("open") ?: false
 
