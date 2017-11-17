@@ -132,7 +132,7 @@ fun journalPage(user: String, page: Int, fa: FA): JournalPage {
                         .substringAfter("jid:")
                 val title = it.selectFirst("td.cat").text()
                 val time = it.selectFirst("span.popup_date")?.attr("title") ?: ""
-                val numComments = it.selectFirst("a:containsOwn(Comments)")
+                val numComments = it.selectFirst("a:containsOwn(Comments \\()")
                         ?.text()
                         ?.substringAfter('(')
                         ?.substringBefore(')')
@@ -170,3 +170,9 @@ fun journalPages(user: String, fa: FA) =
  */
 fun journals(user: String, fa: FA) =
         journalPages(user, fa).flatMap { (_, j) -> j.journals.asSequence() }
+
+fun main(args: Array<String>) {
+    val x = journals("silvixen", FA.default)
+    for (y in x)
+        println(y.numComments)
+}
