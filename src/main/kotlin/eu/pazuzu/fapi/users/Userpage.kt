@@ -2,6 +2,8 @@ package eu.pazuzu.fapi.users
 
 import eu.pazuzu.fapi.FA
 import eu.pazuzu.fapi.comments.Comment
+import eu.pazuzu.fapi.comments.toTree
+import eu.pazuzu.fapi.submissions.Submission
 import eu.pazuzu.fapi.util.parent
 import eu.pazuzu.fapi.util.textAfter
 import eu.pazuzu.fapi.watchlists.Direction
@@ -130,12 +132,4 @@ fun userpage(user: String, fa: FA): Userpage {
 
     return Userpage(user, avatar, fullName, artistType, registeredTime, mood, content, shouts, pageVisits,
             submissions, commentsReceived, commentsGiven, journals, favorites, fa)
-}
-
-fun main(args: Array<String>) {
-    val u = userpage("pazuzu", FA.default)
-
-
-    for (s in u.shouts)
-        println(s)
 }

@@ -1,6 +1,7 @@
 package eu.pazuzu.fapi.comments
 
 import eu.pazuzu.fapi.FA
+import eu.pazuzu.fapi.util.Node
 import org.jsoup.nodes.Element
 
 /**
@@ -30,4 +31,22 @@ data class Comment(
      * The text of the comment.
      */
     val contentText get() = content.text()
+}
+
+/**
+ * Converts the iterable of comments to a tree structure.
+ */
+fun Iterable<Comment>.toTree(): List<Node<Comment>> {
+    fun mapFor(comment: Comment): Node<Comment> =
+            Node(comment, filter { it.replyToId == comment.id }.map { mapFor(it) })
+    return filter { it.replyToId == null }.map { mapFor(it) }
+}
+
+/**
+ * Converts the sequence of comments to a tree structure.
+ */
+fun Sequence<Comment>.toTree(): List<Node<Comment>> {
+    fun mapFor(comment: Comment): Node<Comment> =
+            Node(comment, filter { it.replyToId == comment.id }.map { mapFor(it) }.toList())
+    return filter { it.replyToId == null }.map { mapFor(it) }.toList()
 }
