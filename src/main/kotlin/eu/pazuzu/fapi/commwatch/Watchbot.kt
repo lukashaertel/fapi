@@ -81,7 +81,7 @@ fun main(args: Array<String>) {
                     journalsDaemon(a, FA.default).consumeEach {
                         val open = it
                                 .lastOrNull { "open" in it.title.toLowerCase() || "closed" in it.title.toLowerCase() }
-                                ?.title?.contains("open") ?: false
+                                ?.title?.toLowerCase()?.contains("open") ?: false
 
                         if (last != open) {
                             last = open
